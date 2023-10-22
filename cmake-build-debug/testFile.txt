@@ -1,0 +1,28 @@
+const decimalNumber = 42;
+const floatingPoint = 3.14;
+const hexNumber = 0x2A;
+
+let stringConstant = "Hello, world!";
+let charConstant = 'c';
+
+// This is a single-line comment
+
+/* This is a 
+   multi-line comment */
+
+if (decimalNumber == 42) {
+    console.log("The number is 42");
+}
+
+for (let i = 0; i < 5; i++) {
+    console.log("Loop iteration:", i);
+}
+
+function display(message) {
+    console.log(message);
+}
+
+const array = [1, 2, 3, 4, 5];
+let sum = decimalNumber + floatingPoint;
+
+@ unrecognizedSymbol; // This is an error
