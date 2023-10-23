@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <map>
 #include <fstream>
+#include <iomanip>
 
 // Enum to categorize tokens
 enum TokenType {
@@ -75,7 +76,6 @@ LexemeTable createLexemeTable(const std::vector<Token>& tokens) {
 }
 
 void displayLexemeTable(const LexemeTable& table) {
-    std::cout << "Lexeme Table:" << std::endl;
     std::cout << "--------------------------------------------" << std::endl;
     std::cout << "|   Lexeme   |            Type            |" << std::endl;
     std::cout << "--------------------------------------------" << std::endl;
@@ -136,118 +136,60 @@ bool isDelimiter(const std::string& token) {
     return std::find(delimiters.begin(), delimiters.end(), token) != delimiters.end();
 }
 
-std::vector<Token> tokenize(const std::string& code) {
+std::vector<Token> tokenize(const std::string& input) {
     std::vector<Token> tokens;
     std::string buffer;
-    bool inString = false;
-    bool inComment = false;
-    bool inSingleLineComment = false;
-    char stringDelimiter = '"';
 
-    for (char ch : code) {
+    for (size_t i = 0; i < input.length(); ++i) {
+        char ch = input[i];
 
-        if (ch == '=' && !buffer.empty() && buffer.back() == '=') {
-            buffer += ch;
-            tokens.push_back(determineTokenType(buffer));
-            buffer.clear();
-            continue;
-        }
-
-        // Handling single-line comments
-        if (inSingleLineComment) {
-            if (ch == '\n') {
-                inSingleLineComment = false;
-                tokens.push_back({buffer, COMMENT});
-                buffer.clear();
-            } else {
-                buffer += ch;
-            }
-            continue;
-        }
-
-        // Handling multi-line comments
-        if (inComment) {
-            buffer += ch;
-            if (buffer.size() > 1 && buffer.substr(buffer.size() - 2) == "*/") {
-                inComment = false;
-                tokens.push_back({buffer, COMMENT});
-                buffer.clear();
-            }
-            continue;
-        }
-
-        // Handling string constants
-        if (ch == '"' || ch == '\'') {
-            if (inString) {
-                buffer += ch;
+        if (std::isspace(ch) || isOperator(std::string(1, ch)) || isDelimiter(std::string(1, ch))) {
+            if (!buffer.empty()) {
                 tokens.push_back(determineTokenType(buffer));
                 buffer.clear();
-                inString = false;
-            } else {
-                inString = true;
-                stringDelimiter = ch;
-                buffer += ch;
             }
-            continue;
-        }
 
-
-        // Detecting start of comments or handling divisions
-        if (ch == '/') {
-            if (buffer == "/") {
-                inSingleLineComment = true;
-                continue;
-            } else if (buffer.empty()) {
-                buffer += ch;
-                continue;
+            if (isOperator(std::string(1, ch)) || isDelimiter(std::string(1, ch))) {
+                tokens.push_back(determineTokenType(std::string(1, ch)));
             }
-        }
-        if (ch == '*' && buffer == "/") {
-            inComment = true;
+
+            // Handle multi-character operators like '=='
+            if (i < input.length() - 1) {
+                std::string potentialDoubleOp = std::string(1, ch) + std::string(1, input[i + 1]);
+                if (isOperator(potentialDoubleOp)) {
+                    tokens.push_back(determineTokenType(potentialDoubleOp));
+                    i++;  // skip next character
+                }
+            }
+
+            // Handling comments
+            if (ch == '/' && i < input.length() - 1) {
+                // Single-line comment
+                if (input[i + 1] == '/') {
+                    size_t commentEnd = input.find("\n", i + 2);
+                    tokens.push_back({ input.substr(i, commentEnd - i), TokenType::COMMENT });
+                    i = commentEnd;  // skip to the end of the comment
+                }
+                    // Multi-line comment
+                else if (input[i + 1] == '*') {
+                    size_t commentEnd = input.find("*/", i + 2);
+                    tokens.push_back({ input.substr(i, commentEnd + 2 - i), TokenType::COMMENT });
+                    i = commentEnd + 1;  // skip to the end of the comment
+                }
+            }
+        } else {
             buffer += ch;
-            continue;
         }
-
-        // Push tokens when whitespace is encountered
-        if (std::isspace(ch)) {
-            if (!buffer.empty()) {
-                tokens.push_back({buffer, UNKNOWN});
-                buffer.clear();
-            }
-            continue;
-        }
-
-        // Handle operators and delimiters
-        if (isOperator(buffer + ch) || isDelimiter(buffer + ch)) {
-            if (!buffer.empty() && buffer != "/" && buffer != "*") {
-                tokens.push_back({buffer, UNKNOWN});
-            }
-            buffer += ch;
-            if (isOperator(buffer) || isDelimiter(buffer)) {
-                tokens.push_back({buffer, UNKNOWN});
-                buffer.clear();
-            }
-            continue;
-        }
-
-        if (!buffer.empty() && (isOperator(std::string(1, ch)) || isDelimiter(std::string(1, ch)))) {
-            tokens.push_back({buffer, UNKNOWN});
-            buffer.clear();
-        }
-
-        // Append current character to buffer
-        buffer += ch;
     }
 
-    // Push any remaining tokens
+    // Handle any remaining characters in the buffer
     if (!buffer.empty()) {
         tokens.push_back(determineTokenType(buffer));
-        buffer.clear();
     }
-
 
     return tokens;
 }
+
 
 void displayTokensByClass(const std::vector<Token>& tokens) {
     std::map<TokenType, std::vector<std::string>> groupedTokens;

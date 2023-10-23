@@ -2,7 +2,7 @@ const decimalNumber = 42;
 const floatingPoint = 3.14;
 const hexNumber = 0x2A;
 
-let stringConstant = "Hello, world!";
+let stringConstant = "Hello";
 let charConstant = 'c';
 
 // This is a single-line comment
@@ -10,19 +10,13 @@ let charConstant = 'c';
 /* This is a 
    multi-line comment */
 
-if (decimalNumber == 42) {
-    console.log("The number is 42");
-}
+if (decimalNumber == 42) {}
 
-for (let i = 0; i < 5; i++) {
-    console.log("Loop iteration:", i);
-}
+for (let i = 0; i < 5; i++) {}
 
-function display(message) {
-    console.log(message);
-}
+function display(message) {}
 
 const array = [1, 2, 3, 4, 5];
 let sum = decimalNumber + floatingPoint;
 
-@ unrecognizedSymbol; // This is an error
+@unrecognizedSymbol;
